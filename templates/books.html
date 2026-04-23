@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Books - Library System</title>
+    <style>
+        :root {
+            --primary: #0f6db4;
+            --primary-dark: #0a4f82;
+            --surface: #ffffff;
+            --background: #f4f7fa;
+            --text: #1d2939;
+            --muted: #526071;
+            --border: #d7e2ec;
+            --success: #18794e;
+            --warning: #b56f00;
+            --danger: #c0352b;
+            --shadow: 0 12px 30px rgba(15, 54, 92, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(180deg, #eef5fb 0%, #f8fbfd 100%);
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+        }
+
+        .navbar {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .navbar h2 {
+            margin: 0;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            margin-left: 20px;
+        }
+
+        .container {
+            width: min(1250px, 94%);
+            margin: 30px auto 40px;
+        }
+
+        .flash {
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            font-weight: bold;
+        }
+
+        .flash.success {
+            background: #e8f7ef;
+            color: var(--success);
+        }
+
+        .flash.error {
+            background: #fdeceb;
+            color: var(--danger);
+        }
+
+        .page-head,
+        .filters,
+        .table-wrap,
+        .empty-message {
+            background: var(--surface);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .page-head {
+            padding: 22px;
+            margin-bottom: 18px;
+        }
+
+        .page-head p {
+            margin-bottom: 0;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .filters {
+            padding: 18px;
+            margin-bottom: 18px;
+        }
+
+        .filters form {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input,
+        select,
+        button {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #c8d4df;
+            font-size: 14px;
+        }
+
+        button,
+        .button-link {
+            border: none;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .button-link {
+            display: inline-block;
+            padding: 10px 14px;
+            border-radius: 8px;
+        }
+
+        .secondary {
+            background: #e8f3fb;
+            color: var(--primary-dark);
+        }
+
+        .danger {
+            background: #fbe7e5;
+            color: var(--danger);
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #e5edf3;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #eaf3fb;
+            color: var(--primary-dark);
+            white-space: nowrap;
+        }
+
+        tr:hover {
+            background-color: #f9fcff;
+        }
+
+        .cover-cell {
+            width: 100px;
+        }
+
+        .book-cover {
+            width: 70px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 8px 18px rgba(15, 54, 92, 0.15);
+            border: 1px solid #dfe9f1;
+        }
+
+        .no-cover {
+            width: 70px;
+            height: 100px;
+            border-radius: 8px;
+            border: 1px dashed #bfd0de;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 12px;
+            color: var(--muted);
+            background: #fbfdff;
+            padding: 6px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge.available {
+            background: #e8f7ef;
+            color: var(--success);
+        }
+
+        .badge.low {
+            background: #fff4dc;
+            color: var(--warning);
+        }
+
+        .badge.borrowed {
+            background: #fdeceb;
+            color: var(--danger);
+        }
+
+        .action-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .inline-form {
+            display: inline;
+        }
+
+        .inline-form button {
+            width: auto;
+        }
+
+        .empty-message {
+            padding: 24px;
+        }
+
+        .actions {
+            margin-top: 18px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 980px) {
+            .filters form {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h2>Library Management System</h2>
+        <div>
+            <a href="/dashboard">Dashboard</a>
+
+            {% if role == 'admin' %}
+                <a href="/add_book">Add Book</a>
+            {% endif %}
+
+            <a href="/logout">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="page-head">
+            <h2>Book Catalogue</h2>
+            {% if role == 'admin' %}
+                <p>
+                    This page helps the admin manage the complete book collection, including searching,
+                    viewing cover images, updating records, and deleting books when needed.
+                </p>
+            {% else %}
+                <p>
+                    This page allows users to browse the library catalogue, search books by category or title,
+                    check availability, and borrow or return books easily.
+                </p>
+            {% endif %}
+        </div>
+
+        <div class="filters">
+            <form method="GET" action="/books">
+                <!-- Search tools make the catalogue more usable for both admins and users -->
+                <div>
+                    <label for="q">Search</label>
+                    <input id="q" name="q" type="text" value="{{ filters.q }}" placeholder="Search by title, author, or category">
+                </div>
+
+                <div>
+                    <label for="category">Category</label>
+                    <select id="category" name="category">
+                        <option value="">All categories</option>
+                        {% for item in categories %}
+                            <option value="{{ item }}" {% if filters.category == item %}selected{% endif %}>{{ item }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label for="availability">Availability</label>
+                    <select id="availability" name="availability">
+                        <option value="">All statuses</option>
+                        <option value="available" {% if filters.availability == 'available' %}selected{% endif %}>Available</option>
+                        <option value="borrowed" {% if filters.availability == 'borrowed' %}selected{% endif %}>Borrowed</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>&nbsp;</label>
+                    <button type="submit">Apply Filters</button>
+                </div>
+
+                <div>
+                    <label>&nbsp;</label>
+                    <a class="button-link secondary" href="/books">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        {% if books %}
+        <div class="table-wrap">
+            <table>
+                <tr>
+                    <th>Cover</th>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Category</th>
+                    <th>Total Qty</th>
+                    <th>Available</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+
+                {% for book in books %}
+                <tr>
+                    <td class="cover-cell">
+                        {% if book.cover_url %}
+                            <img class="book-cover" src="{{ book.cover_url }}" alt="{{ book.title }} cover">
+                        {% else %}
+                            <div class="no-cover">No Image</div>
+                        {% endif %}
+                    </td>
+
+                    <td>{{ book.book_id }}</td>
+                    <td>{{ book.title }}</td>
+                    <td>{{ book.author }}</td>
+                    <td>{{ book.category }}</td>
+                    <td>{{ book.quantity }}</td>
+                    <td>{{ book.available_quantity }}</td>
+                    <td><span class="badge {{ book.status_class }}">{{ book.status }}</span></td>
+
+                    <td>
+                        <div class="action-group">
+                            {% if role == 'admin' %}
+                                <!-- Admin controls focus on managing the catalogue -->
+                                <a class="button-link secondary" href="/books/edit/{{ book.book_id }}">Edit</a>
+
+                                <form class="inline-form" method="POST" action="/books/delete/{{ book.book_id }}" onsubmit="return confirm('Delete this book?');">
+                                    <button type="submit" class="danger">Delete</button>
+                                </form>
+                            {% else %}
+                                <!-- User controls focus on borrowing activity rather than editing records -->
+                                {% if book.book_id in user_borrow_map %}
+                                    <form class="inline-form" method="POST" action="/return/{{ user_borrow_map[book.book_id] }}">
+                                        <button type="submit" class="secondary">Return</button>
+                                    </form>
+                                {% else %}
+                                    <form class="inline-form" method="POST" action="/borrow/{{ book.book_id }}">
+                                        <button type="submit" {% if book.available_quantity == 0 %}disabled{% endif %}>Borrow</button>
+                                    </form>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-message">
+            <p>No books matched your current filters.</p>
+        </div>
+        {% endif %}
+
+        <div class="actions">
+            {% if role == 'admin' %}
+                <a class="button-link" href="/add_book">Add New Book</a>
+            {% endif %}
+            <a class="button-link secondary" href="/dashboard">Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>

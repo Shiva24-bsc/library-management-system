@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - Library System</title>
+    <style>
+        :root {
+            --primary: #0f6db4;
+            --primary-dark: #0a4f82;
+            --surface: #ffffff;
+            --background: #f4f7fa;
+            --text: #1d2939;
+            --muted: #526071;
+            --border: #d7e2ec;
+            --success: #18794e;
+            --warning: #b56f00;
+            --danger: #c0352b;
+            --info: #0f6db4;
+            --shadow: 0 12px 30px rgba(15, 54, 92, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(180deg, #eef5fb 0%, #f8fbfd 100%);
+            color: var(--text);
+        }
+
+        .navbar {
+            background: var(--primary);
+            color: white;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .navbar h2 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .container {
+            width: min(1180px, 92%);
+            margin: 30px auto 50px;
+        }
+
+        .flash {
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-bottom: 18px;
+            font-weight: bold;
+        }
+
+        .flash.success {
+            background: #e8f7ef;
+            color: var(--success);
+        }
+
+        .flash.error {
+            background: #fdeceb;
+            color: var(--danger);
+        }
+
+        .hero {
+            background: var(--surface);
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: var(--shadow);
+            margin-bottom: 22px;
+        }
+
+        .hero h1 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .hero p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .stats-grid,
+        .quick-grid,
+        .panel-grid {
+            display: grid;
+            gap: 18px;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            margin-bottom: 22px;
+        }
+
+        .user-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+
+        .stat-card,
+        .quick-card,
+        .panel {
+            background: var(--surface);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card,
+        .user-stat-card {
+            padding: 22px;
+            transition: transform 0.2s ease;
+        }
+
+        .stat-card:hover,
+        .user-stat-card:hover,
+        .quick-card:hover,
+        .panel:hover {
+            transform: translateY(-2px);
+        }
+
+        .user-stat-card {
+            background: #fbfdff;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 30px;
+            font-weight: bold;
+            color: var(--primary-dark);
+        }
+
+        .quick-grid {
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            margin-bottom: 22px;
+        }
+
+        .quick-card {
+            padding: 22px;
+        }
+
+        .quick-card h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .quick-card p {
+            color: var(--muted);
+            line-height: 1.5;
+            margin-bottom: 18px;
+        }
+
+        .quick-card a {
+            display: inline-block;
+            padding: 10px 16px;
+            border-radius: 10px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .panel-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .panel {
+            padding: 22px;
+        }
+
+        .panel h3 {
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+
+        .item-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .item {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            background: #fbfdff;
+        }
+
+        .activity-row {
+            display: grid;
+            grid-template-columns: 70px 1fr auto;
+            gap: 14px;
+            align-items: start;
+        }
+
+        .book-cover {
+            width: 70px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 8px 18px rgba(15, 54, 92, 0.15);
+            border: 1px solid #dfe9f1;
+        }
+
+        .no-cover {
+            width: 70px;
+            height: 100px;
+            border-radius: 8px;
+            border: 1px dashed #bfd0de;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 12px;
+            color: var(--muted);
+            background: #fbfdff;
+            padding: 6px;
+        }
+
+        .item strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .item small,
+        .item p {
+            color: var(--muted);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .inline-form {
+            margin-top: 10px;
+        }
+
+        .inline-form button {
+            padding: 9px 14px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .badge {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge.overdue {
+            background: #fdeceb;
+            color: var(--danger);
+        }
+
+        .badge.warning {
+            background: #fff4dc;
+            color: var(--warning);
+        }
+
+        .badge.info {
+            background: #e8f3fb;
+            color: var(--info);
+        }
+
+        .badge.borrowed {
+            background: #fff4dc;
+            color: var(--warning);
+        }
+
+        .badge.returned {
+            background: #e8f7ef;
+            color: var(--success);
+        }
+
+        .empty {
+            color: var(--muted);
+            margin: 0;
+        }
+
+        .summary-note {
+            font-size: 14px;
+            color: var(--muted);
+            margin-top: 10px;
+        }
+
+        @media (max-width: 960px) {
+            .panel-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .activity-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h2>Library Management System</h2>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/books">View Books</a>
+            {% if role == 'admin' %}
+                <a href="/add_book">Add Book</a>
+            {% endif %}
+            <a href="/logout">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Main welcome section. This explains clearly what kind of user is logged in. -->
+        <div class="hero">
+            <h1>Welcome, {{ user }}</h1>
+            {% if role == 'admin' %}
+                <p>
+                    You are logged in as an <strong>admin</strong>. You can manage the catalogue, monitor borrowing activity,
+                    and keep the system organised with live data from the database.
+                </p>
+            {% else %}
+                <p>
+                    You are logged in as a <strong>user</strong>. This dashboard shows your real borrowing activity,
+                    due dates, notifications, and reading history instead of generic placeholder content.
+                </p>
+            {% endif %}
+        </div>
+
+        <!-- System-wide stats still make sense for admin users. -->
+        {% if role == 'admin' %}
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Books</div>
+                <div class="stat-value">{{ stats.total_books }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Registered Users</div>
+                <div class="stat-value">{{ stats.total_users }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Loans</div>
+                <div class="stat-value">{{ stats.active_loans }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Overdue Books</div>
+                <div class="stat-value">{{ stats.overdue_count }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- User-focused stats make the dashboard feel personal and useful. -->
+        {% if role != 'admin' %}
+        <div class="user-stats-grid">
+            <div class="user-stat-card">
+                <div class="stat-label">My Borrowed Books</div>
+                <div class="stat-value">{{ stats.my_borrowed_books }}</div>
+            </div>
+            <div class="user-stat-card">
+                <div class="stat-label">Books Due Soon</div>
+                <div class="stat-value">{{ stats.my_due_soon }}</div>
+            </div>
+            <div class="user-stat-card">
+                <div class="stat-label">My Overdue Books</div>
+                <div class="stat-value">{{ stats.my_overdue }}</div>
+            </div>
+            <div class="user-stat-card">
+                <div class="stat-label">Books Returned</div>
+                <div class="stat-value">{{ stats.my_returned }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick actions help users move through the system without confusion. -->
+        <div class="quick-grid">
+            {% if role == 'admin' %}
+                <div class="quick-card">
+                    <h3>Manage Book Collection</h3>
+                    <p>Add new books, edit existing records, update quantities, and remove outdated items from the catalogue.</p>
+                    <a href="/books">Open Catalogue</a>
+                </div>
+
+                <div class="quick-card">
+                    <h3>Add New Book</h3>
+                    <p>Insert realistic books with categories and cover images to make the system look complete and active.</p>
+                    <a href="/add_book">Add Book</a>
+                </div>
+
+                <div class="quick-card">
+                    <h3>Monitor System Activity</h3>
+                    <p>Use dashboard counts and recent activity to keep track of borrowing trends and overdue items.</p>
+                    <a href="/dashboard">Refresh Dashboard</a>
+                </div>
+            {% else %}
+                <div class="quick-card">
+                    <h3>Browse and Search Books</h3>
+                    <p>Search the catalogue by title, author, or category and check availability before borrowing.</p>
+                    <a href="/books">Browse Books</a>
+                </div>
+
+                <div class="quick-card">
+                    <h3>Borrow or Return Books</h3>
+                    <p>Use the catalogue page to borrow books and return them when you finish reading.</p>
+                    <a href="/books">Manage Borrowing</a>
+                </div>
+
+                <div class="quick-card">
+                    <h3>Keep Track of Due Dates</h3>
+                    <p>Your notifications and activity panels below update from real due dates and borrowing records.</p>
+                    <a href="/dashboard">Refresh Dashboard</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="panel-grid">
+            <!-- Notifications should show real system events, not decorative text. -->
+            <div class="panel">
+                <h3>Notification Center</h3>
+                {% if notifications %}
+                    <div class="item-list">
+                        {% for note in notifications %}
+                            <div class="item">
+                                <strong>{{ note.title }}</strong>
+                                <p>{{ note.detail }}</p>
+                                <span class="badge {{ note.type }}">{{ note.type|title }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="empty">No important notifications at the moment.</p>
+                {% endif %}
+
+                {% if role != 'admin' %}
+                    <p class="summary-note">
+                        Notifications are based on your own due dates and new books added to the system.
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- New arrivals help the system feel active and updated. -->
+            <div class="panel">
+                <h3>New Arrivals</h3>
+                {% if new_arrivals %}
+                    <div class="item-list">
+                        {% for book in new_arrivals %}
+                            <div class="item">
+                                <div class="activity-row">
+                                    <div>
+                                        {% if book.cover_url %}
+                                            <img class="book-cover" src="{{ book.cover_url }}" alt="{{ book.title }} cover">
+                                        {% else %}
+                                            <div class="no-cover">No Image</div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <strong>{{ book.title }}</strong>
+                                        <small>{{ book.author }} | {{ book.category }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="empty">Newly added books will appear here.</p>
+                {% endif %}
+            </div>
+
+            <!-- This panel gives users direct, meaningful interaction with their active loans. -->
+            <div class="panel">
+                <h3>{% if role == 'admin' %}Recent Borrowing Activity{% else %}My Borrowed Books{% endif %}</h3>
+                {% if role == 'admin' %}
+                    {% if recent_activity %}
+                        <div class="item-list">
+                            {% for item in recent_activity %}
+                                <div class="item">
+                                    <strong>{{ item.title }}</strong>
+                                    <small>Borrowed on {{ item.borrow_date }}</small><br>
+                                    {% if item.returned_at %}
+                                        <small>Returned on {{ item.returned_at }}</small>
+                                        <div><span class="badge returned">Returned</span></div>
+                                    {% else %}
+                                        <small>Due on {{ item.due_date }}</small>
+                                        <div>
+                                            <span class="badge {% if item.loan_status == 'Overdue' %}overdue{% else %}borrowed{% endif %}">
+                                                {{ item.loan_status }}
+                                            </span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="empty">No recent activity found.</p>
+                    {% endif %}
+                {% else %}
+                    {% if borrowed_now %}
+                        <div class="item-list">
+                            {% for item in borrowed_now %}
+                                <div class="item">
+                                    <div class="activity-row">
+                                        <div>
+                                            {% if item.cover_url %}
+                                                <img class="book-cover" src="{{ item.cover_url }}" alt="{{ item.title }} cover">
+                                            {% else %}
+                                                <div class="no-cover">No Image</div>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <strong>{{ item.title }}</strong>
+                                            <small>{{ item.author }} | {{ item.category }}</small><br>
+                                            <small>Borrowed {{ item.borrowed_label }}</small><br>
+                                            <small>Due on {{ item.due_date }}</small>
+                                            <div>
+                                                <span class="badge {{ item.due_status_class }}">{{ item.due_status_text }}</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <form class="inline-form" method="POST" action="/return/{{ item.borrow_id }}">
+                                                <button type="submit">Return</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="empty">You do not have any borrowed books right now.</p>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- Reading history makes the user dashboard feel much more realistic. -->
+            <div class="panel">
+                <h3>{% if role == 'admin' %}Admin Overview{% else %}My Reading History{% endif %}</h3>
+                {% if role == 'admin' %}
+                    <div class="item-list">
+                        <div class="item">
+                            <strong>Catalogue Control</strong>
+                            <p>Admins can add, edit, and delete books to maintain a clean and realistic catalogue.</p>
+                        </div>
+                        <div class="item">
+                            <strong>Borrow Monitoring</strong>
+                            <p>Borrowing counts and overdue items are updated from real records in the database.</p>
+                        </div>
+                        <div class="item">
+                            <strong>System Oversight</strong>
+                            <p>This dashboard combines management, activity tracking, and quick access in one place.</p>
+                        </div>
+                    </div>
+                {% else %}
+                    {% if reading_history %}
+                        <div class="item-list">
+                            {% for item in reading_history %}
+                                <div class="item">
+                                    <div class="activity-row">
+                                        <div>
+                                            {% if item.cover_url %}
+                                                <img class="book-cover" src="{{ item.cover_url }}" alt="{{ item.title }} cover">
+                                            {% else %}
+                                                <div class="no-cover">No Image</div>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <strong>{{ item.title }}</strong>
+                                            <small>{{ item.author }}</small><br>
+                                            <small>Borrowed {{ item.borrowed_label }}</small><br>
+                                            <small>Returned on {{ item.returned_at }}</small>
+                                            <div><span class="badge returned">Returned</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="empty">Your returned books will appear here once you start using the system more.</p>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

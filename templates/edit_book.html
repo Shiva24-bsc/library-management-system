@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Book - Library System</title>
+    <style>
+        :root {
+            --primary: #0f6db4;
+            --primary-dark: #0a4f82;
+            --surface: #ffffff;
+            --background: #f4f7fa;
+            --text: #1d2939;
+            --muted: #526071;
+            --border: #d7e2ec;
+            --success: #18794e;
+            --danger: #c0352b;
+            --shadow: 0 12px 30px rgba(15, 54, 92, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(180deg, #eef5fb 0%, #f8fbfd 100%);
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+        }
+
+        .navbar {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .navbar h2 {
+            margin: 0;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            margin-left: 20px;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: 40px auto;
+            background: var(--surface);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--muted);
+            margin-bottom: 25px;
+        }
+
+        .error {
+            color: var(--danger);
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-top: 14px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 11px;
+            margin-top: 6px;
+            border: 1px solid #c8d4df;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .helper-text {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 6px;
+        }
+
+        .preview-box {
+            margin-top: 18px;
+            padding: 14px;
+            border: 1px dashed #bfd0de;
+            border-radius: 12px;
+            background: #fbfdff;
+            text-align: center;
+        }
+
+        .preview-box img {
+            max-width: 180px;
+            max-height: 240px;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(15, 54, 92, 0.12);
+        }
+
+        .preview-placeholder {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 24px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 18px;
+        }
+
+        .back-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h2>Library Management System</h2>
+        <div>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/books">View Books</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Edit Book</h2>
+        <p class="subtitle">Update the book details carefully so the catalogue remains accurate and realistic.</p>
+
+        {% if error %}
+        <p class="error">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST">
+            <!-- These fields hold the main book information shown in the catalogue -->
+            <label for="title">Book Title</label>
+            <input id="title" name="title" type="text" value="{{ book.title }}" required>
+
+            <label for="author">Author</label>
+            <input id="author" name="author" type="text" value="{{ book.author }}" required>
+
+            <label for="category">Category / Genre</label>
+            <input id="category" name="category" type="text" value="{{ book.category }}" required>
+
+            <!-- Cover image URL is optional, but it helps make the system look more complete -->
+            <label for="cover_url">Book Cover Image URL</label>
+            <input id="cover_url" name="cover_url" type="url" value="{{ book.cover_url or '' }}" placeholder="Paste a direct image link for the book cover">
+            <div class="helper-text">
+                Update the image link if you want a different book cover to appear in the system.
+            </div>
+
+            <div class="preview-box">
+                {% if book.cover_url %}
+                    <img id="coverPreview" src="{{ book.cover_url }}" alt="Book cover preview">
+                    <div id="previewPlaceholder" class="preview-placeholder" style="display:none;">
+                        Book cover preview will appear here
+                    </div>
+                {% else %}
+                    <img id="coverPreview" src="" alt="Book cover preview" style="display:none;">
+                    <div id="previewPlaceholder" class="preview-placeholder">
+                        Book cover preview will appear here
+                    </div>
+                {% endif %}
+            </div>
+
+            <label for="quantity">Quantity</label>
+            <input id="quantity" name="quantity" type="number" min="0" value="{{ book.quantity }}" required>
+
+            <button type="submit">Save Changes</button>
+        </form>
+
+        <div class="back-link">
+            <a href="/books">Back to Book List</a>
+        </div>
+    </div>
+
+    <script>
+        // Live preview helps the admin check whether the image URL is correct before saving.
+        const coverInput = document.getElementById("cover_url");
+        const coverPreview = document.getElementById("coverPreview");
+        const previewPlaceholder = document.getElementById("previewPlaceholder");
+
+        coverInput.addEventListener("input", function () {
+            const imageUrl = coverInput.value.trim();
+
+            if (imageUrl) {
+                coverPreview.src = imageUrl;
+                coverPreview.style.display = "inline-block";
+                previewPlaceholder.style.display = "none";
+            } else {
+                coverPreview.src = "";
+                coverPreview.style.display = "none";
+                previewPlaceholder.style.display = "block";
+            }
+        });
+
+        // If the image cannot load, we hide it and fall back to the placeholder.
+        coverPreview.addEventListener("error", function () {
+            coverPreview.style.display = "none";
+            previewPlaceholder.style.display = "block";
+        });
+    </script>
+</body>
+</html>
