@@ -3,99 +3,140 @@
 <head>
     <title>Login - Library System</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f7fa;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
+        :root {
+            --primary: #0f6db4;
+            --primary-dark: #0a4f82;
+            --surface: #ffffff;
+            --text: #1d2939;
+            --muted: #526071;
+            --danger: #c0352b;
+            --shadow: 0 12px 30px rgba(15, 54, 92, 0.12);
         }
 
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 350px;
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #e8f2fb 0%, #f8fbfd 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 430px;
+            background: var(--surface);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            padding: 34px 30px;
         }
 
         h2 {
             text-align: center;
-            margin-bottom: 20px;
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--muted);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .error {
+            color: var(--danger);
+            background: #fdeceb;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+
+        .flash {
+            background: #e8f7ef;
+            color: #18794e;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 16px;
         }
 
         label {
-            font-weight: bold;
             display: block;
-            margin-top: 10px;
+            margin-top: 14px;
+            margin-bottom: 6px;
+            font-weight: bold;
         }
 
         input {
             width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
+            padding: 12px;
+            border: 1px solid #c8d4df;
+            border-radius: 8px;
+            font-size: 14px;
         }
 
         button {
             width: 100%;
-            padding: 10px;
-            margin-top: 20px;
-            background-color: #0077cc;
-            color: white;
+            margin-top: 24px;
+            padding: 12px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
         }
 
-        .error {
-            color: red;
-            font-weight: bold;
-            text-align: center;
+        button:hover {
+            background: var(--primary-dark);
         }
 
-        .flash {
-            color: #18794e;
-            background: #e8f7ef;
-            padding: 10px;
-            border-radius: 8px;
+        .footer-text {
+            margin-top: 18px;
             text-align: center;
-            font-weight: bold;
-            margin-bottom: 12px;
+            color: var(--muted);
         }
 
-        .link {
-            text-align: center;
-            margin-top: 15px;
-        }
-
-        .link a {
+        .footer-text a {
+            color: var(--primary);
             text-decoration: none;
-            color: #0077cc;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Login</h2>
+    <div class="login-card">
+        <h2>Library Login</h2>
+        <p class="subtitle">
+            Sign in to access your dashboard, manage books, and track borrowing activity.
+        </p>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <p class="flash">{{ message }}</p>
+                    <div class="flash">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
         {% if error %}
-        <p class="error">{{ error }}</p>
+            <div class="error">{{ error }}</div>
         {% endif %}
 
         <form method="POST">
+            <!-- Users log in with email and password so the system feels closer to a real application. -->
             <label for="email">Email</label>
             <input id="email" name="email" type="email" placeholder="Enter your email" required>
 
@@ -105,9 +146,10 @@
             <button type="submit">Login</button>
         </form>
 
-        <div class="link">
-            <a href="/register">Don't have an account? Register</a>
-        </div>
+        <p class="footer-text">
+            Don't have an account?
+            <a href="/register">Register here</a>
+        </p>
     </div>
 </body>
 </html>

@@ -7,10 +7,8 @@
             --primary: #0f6db4;
             --primary-dark: #0a4f82;
             --surface: #ffffff;
-            --background: #f4f7fa;
             --text: #1d2939;
             --muted: #526071;
-            --border: #d7e2ec;
             --success: #18794e;
             --danger: #c0352b;
             --shadow: 0 12px 30px rgba(15, 54, 92, 0.08);
@@ -100,7 +98,6 @@
             margin-top: 6px;
             border: 1px solid #c8d4df;
             border-radius: 8px;
-            box-sizing: border-box;
             font-size: 14px;
         }
 
@@ -242,7 +239,7 @@
             }
         });
 
-        // If the image URL is broken, fall back to the placeholder instead of leaving a broken image icon.
+        // If the image URL is broken, fall back to the placeholder.
         coverPreview.addEventListener("error", function () {
             coverPreview.style.display = "none";
             previewPlaceholder.style.display = "block";

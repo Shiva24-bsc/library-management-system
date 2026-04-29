@@ -87,6 +87,12 @@
             margin-bottom: 18px;
         }
 
+        .page-head h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--primary-dark);
+        }
+
         .page-head p {
             margin-bottom: 0;
             color: var(--muted);
@@ -130,6 +136,11 @@
             text-decoration: none;
             text-align: center;
             font-weight: bold;
+        }
+
+        button:disabled {
+            background: #b7c6d4;
+            cursor: not-allowed;
         }
 
         .button-link {
@@ -251,6 +262,12 @@
             flex-wrap: wrap;
         }
 
+        .helper-note {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
         @media (max-width: 980px) {
             .filters form {
                 grid-template-columns: 1fr;
@@ -286,19 +303,19 @@
             {% if role == 'admin' %}
                 <p>
                     This page helps the admin manage the complete book collection, including searching,
-                    viewing cover images, updating records, and deleting books when needed.
+                    checking stock levels, editing records, and removing books when needed.
                 </p>
             {% else %}
                 <p>
-                    This page allows users to browse the library catalogue, search books by category or title,
-                    check availability, and borrow or return books easily.
+                    This page allows users to browse the library catalogue, search by title or category,
+                    check availability, and borrow or return books in a simple way.
                 </p>
             {% endif %}
         </div>
 
         <div class="filters">
             <form method="GET" action="/books">
-                <!-- Search tools make the catalogue more usable for both admins and users -->
+                <!-- Search tools help the catalogue feel practical and realistic. -->
                 <div>
                     <label for="q">Search</label>
                     <input id="q" name="q" type="text" value="{{ filters.q }}" placeholder="Search by title, author, or category">
@@ -333,6 +350,12 @@
                     <a class="button-link secondary" href="/books">Clear</a>
                 </div>
             </form>
+
+            {% if role != 'admin' %}
+                <div class="helper-note">
+                    Borrowed books can be returned directly from this page. Availability updates automatically.
+                </div>
+            {% endif %}
         </div>
 
         {% if books %}
@@ -366,19 +389,21 @@
                     <td>{{ book.category }}</td>
                     <td>{{ book.quantity }}</td>
                     <td>{{ book.available_quantity }}</td>
-                    <td><span class="badge {{ book.status_class }}">{{ book.status }}</span></td>
+                    <td>
+                        <span class="badge {{ book.status_class }}">{{ book.status }}</span>
+                    </td>
 
                     <td>
                         <div class="action-group">
                             {% if role == 'admin' %}
-                                <!-- Admin controls focus on managing the catalogue -->
+                                <!-- Admin actions focus on managing the catalogue records. -->
                                 <a class="button-link secondary" href="/books/edit/{{ book.book_id }}">Edit</a>
 
                                 <form class="inline-form" method="POST" action="/books/delete/{{ book.book_id }}" onsubmit="return confirm('Delete this book?');">
                                     <button type="submit" class="danger">Delete</button>
                                 </form>
                             {% else %}
-                                <!-- User controls focus on borrowing activity rather than editing records -->
+                                <!-- User actions focus on borrowing and returning books. -->
                                 {% if book.book_id in user_borrow_map %}
                                     <form class="inline-form" method="POST" action="/return/{{ user_borrow_map[book.book_id] }}">
                                         <button type="submit" class="secondary">Return</button>

@@ -58,7 +58,7 @@
         }
 
         .container {
-            width: min(1180px, 92%);
+            width: min(1220px, 94%);
             margin: 30px auto 50px;
         }
 
@@ -99,25 +99,21 @@
         }
 
         .stats-grid,
+        .user-stats-grid,
         .quick-grid,
         .panel-grid {
             display: grid;
             gap: 18px;
         }
 
-        .stats-grid {
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            margin-bottom: 22px;
-        }
-
+        .stats-grid,
         .user-stats-grid {
-            display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 18px;
             margin-bottom: 22px;
         }
 
         .stat-card,
+        .user-stat-card,
         .quick-card,
         .panel {
             background: var(--surface);
@@ -134,14 +130,14 @@
         .stat-card:hover,
         .user-stat-card:hover,
         .quick-card:hover,
-        .panel:hover {
+        .panel:hover,
+        .notification-card:hover {
             transform: translateY(-2px);
         }
 
         .user-stat-card {
             background: #fbfdff;
             border: 1px solid var(--border);
-            border-radius: 16px;
         }
 
         .stat-label {
@@ -154,6 +150,10 @@
             font-size: 30px;
             font-weight: bold;
             color: var(--primary-dark);
+        }
+
+        .fine-value {
+            color: var(--danger);
         }
 
         .quick-grid {
@@ -188,7 +188,7 @@
         }
 
         .panel-grid {
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1.1fr 0.9fr;
         }
 
         .panel {
@@ -255,6 +255,12 @@
             line-height: 1.5;
         }
 
+        .fine-note {
+            margin-top: 8px;
+            font-weight: bold;
+            color: var(--danger);
+        }
+
         .inline-form {
             margin-top: 10px;
         }
@@ -314,6 +320,105 @@
             margin-top: 10px;
         }
 
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .notification-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .notification-tab {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            background: #f8fbfd;
+            border-radius: 999px;
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .notification-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .notification-card {
+            border: 1px solid var(--border);
+            border-left: 5px solid #d7e2ec;
+            border-radius: 14px;
+            padding: 14px;
+            background: #fbfdff;
+            transition: transform 0.2s ease;
+        }
+
+        .notification-card.overdue {
+            border-left-color: var(--danger);
+        }
+
+        .notification-card.warning {
+            border-left-color: var(--warning);
+        }
+
+        .notification-card.info {
+            border-left-color: var(--info);
+        }
+
+        .notification-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .notification-icon {
+            font-size: 18px;
+            margin-right: 8px;
+        }
+
+        .notification-title-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .notification-time {
+            font-size: 12px;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .unread-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: inline-block;
+        }
+
+        .notification-action {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
         @media (max-width: 960px) {
             .panel-grid {
                 grid-template-columns: 1fr;
@@ -347,23 +452,22 @@
             {% endif %}
         {% endwith %}
 
-        <!-- Main welcome section. This explains clearly what kind of user is logged in. -->
+        <!-- This intro changes by role so the dashboard feels more realistic for each account type. -->
         <div class="hero">
             <h1>Welcome, {{ user }}</h1>
             {% if role == 'admin' %}
                 <p>
-                    You are logged in as an <strong>admin</strong>. You can manage the catalogue, monitor borrowing activity,
-                    and keep the system organised with live data from the database.
+                    You are logged in as an <strong>admin</strong>. This dashboard helps you monitor borrowing activity,
+                    overdue records, low stock books, and fine-related alerts across the system.
                 </p>
             {% else %}
                 <p>
-                    You are logged in as a <strong>user</strong>. This dashboard shows your real borrowing activity,
-                    due dates, notifications, and reading history instead of generic placeholder content.
+                    You are logged in as a <strong>user</strong>. This dashboard shows your live borrowing activity,
+                    due dates, overdue fines, and reading history based on your actual account usage.
                 </p>
             {% endif %}
         </div>
 
-        <!-- System-wide stats still make sense for admin users. -->
         {% if role == 'admin' %}
         <div class="stats-grid">
             <div class="stat-card">
@@ -383,10 +487,7 @@
                 <div class="stat-value">{{ stats.overdue_count }}</div>
             </div>
         </div>
-        {% endif %}
-
-        <!-- User-focused stats make the dashboard feel personal and useful. -->
-        {% if role != 'admin' %}
+        {% else %}
         <div class="user-stats-grid">
             <div class="user-stat-card">
                 <div class="stat-label">My Borrowed Books</div>
@@ -401,79 +502,121 @@
                 <div class="stat-value">{{ stats.my_overdue }}</div>
             </div>
             <div class="user-stat-card">
-                <div class="stat-label">Books Returned</div>
-                <div class="stat-value">{{ stats.my_returned }}</div>
+                <div class="stat-label">Current Fine</div>
+                <div class="stat-value fine-value">£{{ stats.my_total_fine }}</div>
             </div>
         </div>
         {% endif %}
 
-        <!-- Quick actions help users move through the system without confusion. -->
         <div class="quick-grid">
             {% if role == 'admin' %}
                 <div class="quick-card">
                     <h3>Manage Book Collection</h3>
-                    <p>Add new books, edit existing records, update quantities, and remove outdated items from the catalogue.</p>
+                    <p>Add, edit, and organise books so the catalogue stays accurate and realistic.</p>
                     <a href="/books">Open Catalogue</a>
                 </div>
 
                 <div class="quick-card">
                     <h3>Add New Book</h3>
-                    <p>Insert realistic books with categories and cover images to make the system look complete and active.</p>
+                    <p>Insert new titles with categories, quantities, and images to keep the system active.</p>
                     <a href="/add_book">Add Book</a>
                 </div>
 
                 <div class="quick-card">
-                    <h3>Monitor System Activity</h3>
-                    <p>Use dashboard counts and recent activity to keep track of borrowing trends and overdue items.</p>
+                    <h3>Monitor Fine Alerts</h3>
+                    <p>Use notifications to review overdue books, fine amounts, and important admin actions.</p>
                     <a href="/dashboard">Refresh Dashboard</a>
                 </div>
             {% else %}
                 <div class="quick-card">
                     <h3>Browse and Search Books</h3>
-                    <p>Search the catalogue by title, author, or category and check availability before borrowing.</p>
+                    <p>Search books by title, author, or category and check real-time availability.</p>
                     <a href="/books">Browse Books</a>
                 </div>
 
                 <div class="quick-card">
                     <h3>Borrow or Return Books</h3>
-                    <p>Use the catalogue page to borrow books and return them when you finish reading.</p>
+                    <p>Borrow available books and return them when you finish reading.</p>
                     <a href="/books">Manage Borrowing</a>
                 </div>
 
                 <div class="quick-card">
-                    <h3>Keep Track of Due Dates</h3>
-                    <p>Your notifications and activity panels below update from real due dates and borrowing records.</p>
+                    <h3>Track Fines and Due Dates</h3>
+                    <p>Your dashboard now shows overdue books, daily fines, and borrowing updates in one place.</p>
                     <a href="/dashboard">Refresh Dashboard</a>
                 </div>
             {% endif %}
         </div>
 
         <div class="panel-grid">
-            <!-- Notifications should show real system events, not decorative text. -->
+            <!-- These tabs now filter notifications properly instead of behaving like plain labels. -->
             <div class="panel">
-                <h3>Notification Center</h3>
+                <div class="notification-header">
+                    <h3>Notification Center</h3>
+                    <div class="notification-tabs">
+                        <a href="/dashboard?notification_filter=all" class="notification-tab {% if notification_filter == 'all' %}active{% endif %}">
+                            All ({{ notification_counts.all }})
+                        </a>
+                        <a href="/dashboard?notification_filter=unread" class="notification-tab {% if notification_filter == 'unread' %}active{% endif %}">
+                            Unread ({{ notification_counts.unread }})
+                        </a>
+                        <a href="/dashboard?notification_filter=alerts" class="notification-tab {% if notification_filter == 'alerts' %}active{% endif %}">
+                            Alerts ({{ notification_counts.alerts }})
+                        </a>
+                    </div>
+                </div>
+
                 {% if notifications %}
                     <div class="item-list">
                         {% for note in notifications %}
-                            <div class="item">
-                                <strong>{{ note.title }}</strong>
+                            <div class="notification-card {{ note.type }}">
+                                <div class="notification-top">
+                                    <div class="notification-title-row">
+                                        <span class="notification-icon">
+                                            {% if note.icon == 'alert' %}
+                                                ⚠
+                                            {% elif note.icon == 'clock' %}
+                                                ⏰
+                                            {% elif note.icon == 'book' %}
+                                                📘
+                                            {% elif note.icon == 'user' %}
+                                                👤
+                                            {% elif note.icon == 'stock' %}
+                                                📦
+                                            {% else %}
+                                                🔔
+                                            {% endif %}
+                                        </span>
+                                        <strong>{{ note.title }}</strong>
+                                        {% if note.unread %}
+                                            <span class="unread-dot"></span>
+                                        {% endif %}
+                                    </div>
+                                    <span class="notification-time">{{ note.timestamp }}</span>
+                                </div>
+
                                 <p>{{ note.detail }}</p>
                                 <span class="badge {{ note.type }}">{{ note.type|title }}</span>
+
+                                {% if note.action_label and note.action_url %}
+                                    <br>
+                                    <a class="notification-action" href="{{ note.action_url }}">{{ note.action_label }}</a>
+                                {% endif %}
                             </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p class="empty">No important notifications at the moment.</p>
+                    <p class="empty">No notifications in this view.</p>
                 {% endif %}
 
                 {% if role != 'admin' %}
                     <p class="summary-note">
-                        Notifications are based on your own due dates and new books added to the system.
+                        Fine alerts are based on the simple rule: £{{ fine_per_day }} per day after the due date.
                     </p>
                 {% endif %}
             </div>
 
-            <!-- New arrivals help the system feel active and updated. -->
+            <!-- New arrivals keep the system looking active and realistic for demos. -->
             <div class="panel">
                 <h3>New Arrivals</h3>
                 {% if new_arrivals %}
@@ -501,7 +644,7 @@
                 {% endif %}
             </div>
 
-            <!-- This panel gives users direct, meaningful interaction with their active loans. -->
+            <!-- Users can see current overdue fines directly on each borrowed book. -->
             <div class="panel">
                 <h3>{% if role == 'admin' %}Recent Borrowing Activity{% else %}My Borrowed Books{% endif %}</h3>
                 {% if role == 'admin' %}
@@ -549,6 +692,12 @@
                                             <div>
                                                 <span class="badge {{ item.due_status_class }}">{{ item.due_status_text }}</span>
                                             </div>
+
+                                            {% if item.fine_amount > 0 %}
+                                                <div class="fine-note">
+                                                    Current fine: £{{ item.fine_amount }}
+                                                </div>
+                                            {% endif %}
                                         </div>
                                         <div>
                                             <form class="inline-form" method="POST" action="/return/{{ item.borrow_id }}">
@@ -565,23 +714,23 @@
                 {% endif %}
             </div>
 
-            <!-- Reading history makes the user dashboard feel much more realistic. -->
+            <!-- Admin can now see registered users directly on the dashboard. -->
             <div class="panel">
-                <h3>{% if role == 'admin' %}Admin Overview{% else %}My Reading History{% endif %}</h3>
+                <h3>{% if role == 'admin' %}Registered Users{% else %}My Reading History{% endif %}</h3>
                 {% if role == 'admin' %}
                     <div class="item-list">
-                        <div class="item">
-                            <strong>Catalogue Control</strong>
-                            <p>Admins can add, edit, and delete books to maintain a clean and realistic catalogue.</p>
-                        </div>
-                        <div class="item">
-                            <strong>Borrow Monitoring</strong>
-                            <p>Borrowing counts and overdue items are updated from real records in the database.</p>
-                        </div>
-                        <div class="item">
-                            <strong>System Oversight</strong>
-                            <p>This dashboard combines management, activity tracking, and quick access in one place.</p>
-                        </div>
+                        {% if registered_users %}
+                            {% for member in registered_users %}
+                                <div class="item">
+                                    <strong>{{ member.name }}</strong>
+                                    <small>{{ member.email }}</small><br>
+                                    <small>Role: {{ member.role|title }}</small><br>
+                                    <small>User ID: {{ member.user_id }}</small>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="empty">No registered users found.</p>
+                        {% endif %}
                     </div>
                 {% else %}
                     {% if reading_history %}
@@ -602,6 +751,12 @@
                                             <small>Borrowed {{ item.borrowed_label }}</small><br>
                                             <small>Returned on {{ item.returned_at }}</small>
                                             <div><span class="badge returned">Returned</span></div>
+
+                                            {% if item.returned_fine > 0 %}
+                                                <div class="fine-note">
+                                                    Late return fine: £{{ item.returned_fine }}
+                                                </div>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
