@@ -7,10 +7,12 @@ from config import db
 app = Flask(__name__)
 app.secret_key = "secret123"
 
+# Simple fine rule used across the whole system.
 FINE_PER_DAY = 1
 
 
 def get_cursor(dictionary=False):
+    # Reconnect if MySQL dropped the connection, which can happen during longer sessions.
     db.ping(reconnect=True, attempts=3, delay=2)
     return db.cursor(dictionary=dictionary)
 
@@ -18,7 +20,7 @@ def get_cursor(dictionary=False):
 def ensure_schema():
     cursor = get_cursor()
 
-    # This helps the dashboard show newly added books.
+    # This helps the dashboard show newly added books in the new arrivals section.
     cursor.execute("SHOW COLUMNS FROM books LIKE 'created_at'")
     if not cursor.fetchone():
         cursor.execute(
@@ -28,7 +30,7 @@ def ensure_schema():
             """
         )
 
-    # Book cover links make the catalogue look more realistic.
+    # Cover image links make the catalogue look more realistic and visual.
     cursor.execute("SHOW COLUMNS FROM books LIKE 'cover_url'")
     if not cursor.fetchone():
         cursor.execute(
@@ -38,7 +40,7 @@ def ensure_schema():
             """
         )
 
-    # Due dates are needed for notifications and return tracking.
+    # Due dates are required for reminders, overdue tracking, and fine calculation.
     cursor.execute("SHOW COLUMNS FROM borrow LIKE 'due_date'")
     if not cursor.fetchone():
         cursor.execute(
@@ -48,7 +50,7 @@ def ensure_schema():
             """
         )
 
-    # returned_at lets us separate active loans from completed returns.
+    # returned_at separates active borrowing from completed returns more clearly.
     cursor.execute("SHOW COLUMNS FROM borrow LIKE 'returned_at'")
     if not cursor.fetchone():
         cursor.execute(
@@ -58,7 +60,26 @@ def ensure_schema():
             """
         )
 
-    # Admin notifications can use this to detect recent registrations.
+    # These fields make the fine system behave more like a real system instead of only showing a visual amount.
+    cursor.execute("SHOW COLUMNS FROM borrow LIKE 'fine_paid'")
+    if not cursor.fetchone():
+        cursor.execute(
+            """
+            ALTER TABLE borrow
+            ADD COLUMN fine_paid TINYINT(1) DEFAULT 0 AFTER returned_at
+            """
+        )
+
+    cursor.execute("SHOW COLUMNS FROM borrow LIKE 'fine_paid_at'")
+    if not cursor.fetchone():
+        cursor.execute(
+            """
+            ALTER TABLE borrow
+            ADD COLUMN fine_paid_at DATE NULL AFTER fine_paid
+            """
+        )
+
+    # created_at on users lets the admin dashboard show recent registrations naturally.
     cursor.execute("SHOW COLUMNS FROM users LIKE 'created_at'")
     if not cursor.fetchone():
         cursor.execute(
@@ -68,6 +89,7 @@ def ensure_schema():
             """
         )
 
+    # Backfill due dates for any older rows that were created before the due_date column existed.
     cursor.execute(
         """
         UPDATE borrow
@@ -76,6 +98,7 @@ def ensure_schema():
         """
     )
 
+    # Backfill returned_at from the older return_date field if needed.
     cursor.execute(
         """
         UPDATE borrow
@@ -89,6 +112,7 @@ def ensure_schema():
 
 
 def login_required():
+    # A very simple session check used before protected pages are loaded.
     return "user" in session
 
 
@@ -96,44 +120,55 @@ def hydrate_session_user():
     if "user" not in session:
         return False
 
-    if "user_id" in session and "role" in session:
+    # We use user_id here so the system refreshes the exact user's role reliably.
+    if "user_id" not in session:
+        return False
+
+    # If the role is already in session, there is nothing extra to refresh.
+    if "role" in session:
         return True
 
     cursor = get_cursor(dictionary=True)
     cursor.execute(
-        "SELECT user_id, role FROM users WHERE name = %s LIMIT 1",
-        (session["user"],),
+        "SELECT user_id, role FROM users WHERE user_id = %s LIMIT 1",
+        (session["user_id"],),
     )
     user = cursor.fetchone()
     cursor.close()
 
+    # If the user no longer exists, clear the session so the app does not keep stale login data.
     if not user:
         session.clear()
         return False
 
-    session["user_id"] = user["user_id"]
     session["role"] = user.get("role", "user")
     return True
 
 
 def is_admin():
+    # Central helper used whenever admin-only actions are checked.
     return session.get("role") == "admin"
 
 
 def calculate_overdue_days(due_date_value, returned_at_value=None):
+    # If there is no due date, there is no overdue calculation to make.
     if not due_date_value:
         return 0
 
+    # For returned books we compare against the return date.
+    # For active books we compare against today's date.
     reference_date = returned_at_value if returned_at_value else date.today()
     overdue_days = (reference_date - due_date_value).days
     return max(overdue_days, 0)
 
 
 def calculate_fine(due_date_value, returned_at_value=None):
+    # The fine is intentionally simple: 1 pound per overdue day.
     return calculate_overdue_days(due_date_value, returned_at_value) * FINE_PER_DAY
 
 
 def days_ago_label(value):
+    # This creates small human-friendly labels for the dashboard like "today" or "3 days ago".
     if not value:
         return ""
     diff = (date.today() - value).days
@@ -145,6 +180,7 @@ def days_ago_label(value):
 
 
 def due_status_label(due_date_value):
+    # This helper keeps due-date wording consistent everywhere in the UI.
     if not due_date_value:
         return ("Unknown", "info")
 
@@ -160,6 +196,7 @@ def due_status_label(due_date_value):
 
 
 def make_notification(title, detail, note_type, icon, timestamp, action_label=None, action_url=None):
+    # Keeping notification creation in one helper makes the dashboard code easier to read later.
     return {
         "title": title,
         "detail": detail,
@@ -173,6 +210,7 @@ def make_notification(title, detail, note_type, icon, timestamp, action_label=No
 
 
 def fetch_book(book_id):
+    # This query returns one book together with live availability details.
     cursor = get_cursor(dictionary=True)
     cursor.execute(
         """
@@ -202,6 +240,7 @@ def fetch_book(book_id):
 
 
 def fetch_books(search_text="", category="", availability=""):
+    # This builds the catalogue list together with current available quantity for each book.
     cursor = get_cursor(dictionary=True)
     query = """
         SELECT
@@ -225,6 +264,7 @@ def fetch_books(search_text="", category="", availability=""):
     """
     params = []
 
+    # Search can match title, author, or category to make browsing easier for users.
     if search_text:
         query += """
             AND (
@@ -236,10 +276,12 @@ def fetch_books(search_text="", category="", availability=""):
         term = f"%{search_text}%"
         params.extend([term, term, term])
 
+    # Category filter narrows the catalogue to one genre or subject.
     if category:
         query += " AND b.category = %s"
         params.append(category)
 
+    # Availability filter helps users quickly find available or fully borrowed books.
     if availability == "available":
         query += " AND GREATEST(b.quantity - COALESCE(active.active_loans, 0), 0) > 0"
     elif availability == "borrowed":
@@ -251,6 +293,7 @@ def fetch_books(search_text="", category="", availability=""):
     books = cursor.fetchall()
     cursor.close()
 
+    # These status labels are used directly by the books page badges.
     for book in books:
         if book["available_quantity"] <= 0:
             book["status"] = "Borrowed"
@@ -266,6 +309,7 @@ def fetch_books(search_text="", category="", availability=""):
 
 
 def fetch_categories():
+    # Distinct categories are used to populate the search filter dropdown.
     cursor = get_cursor()
     cursor.execute(
         "SELECT DISTINCT category FROM books WHERE category IS NOT NULL AND category <> '' ORDER BY category"
@@ -286,10 +330,12 @@ def home():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+        # Basic registration fields come directly from the form.
         name = request.form["name"].strip()
         email = request.form["email"].strip()
         password = request.form["password"].strip()
 
+        # A simple validation step keeps incomplete submissions out of the database.
         if not name or not email or not password:
             return render_template("register.html", error="All fields are required!")
 
@@ -297,6 +343,7 @@ def register():
         cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
         existing_user = cursor.fetchone()
 
+        # Email must be unique so each person logs in with one clear account.
         if existing_user:
             cursor.close()
             return render_template("register.html", error="Email already exists!")
@@ -317,6 +364,7 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        # Login is based on email and password.
         email = request.form["email"].strip()
         password = request.form["password"].strip()
 
@@ -334,6 +382,7 @@ def login():
         if user["password"] != password:
             return render_template("login.html", error="Wrong password!")
 
+        # Session stores the current logged-in identity and permissions.
         session["user"] = user["name"]
         session["user_id"] = user["user_id"]
         session["role"] = user.get("role", "user")
@@ -356,6 +405,7 @@ def dashboard():
 
     cursor = get_cursor(dictionary=True)
 
+    # These are global system stats used mostly by admins.
     cursor.execute("SELECT COUNT(*) AS total_books FROM books")
     total_books = cursor.fetchone()["total_books"]
 
@@ -374,6 +424,7 @@ def dashboard():
     )
     overdue_count = cursor.fetchone()["overdue_count"]
 
+    # These are personal user stats shown in the user dashboard cards.
     cursor.execute(
         """
         SELECT COUNT(*) AS my_borrowed_books
@@ -419,20 +470,29 @@ def dashboard():
     )
     my_returned = cursor.fetchone()["my_returned"]
 
+    # This is the real unpaid total fine for the logged-in user.
     cursor.execute(
         """
         SELECT
-            COALESCE(SUM(DATEDIFF(CURDATE(), due_date)), 0) AS my_total_fine
+            borrow_id,
+            due_date,
+            returned_at,
+            fine_paid
         FROM borrow
         WHERE user_id = %s
-          AND returned_at IS NULL
-          AND due_date < CURDATE()
         """,
         (session["user_id"],),
     )
-    my_total_fine = cursor.fetchone()["my_total_fine"] or 0
+    user_fine_rows = cursor.fetchall()
 
-    # Current books are shown with return buttons for the logged-in user.
+    my_total_fine = 0
+    for row in user_fine_rows:
+        if row["fine_paid"]:
+            continue
+        fine_amount = calculate_fine(row["due_date"], row["returned_at"])
+        my_total_fine += fine_amount
+
+    # Active borrowed books are shown to the user with return options and due status.
     cursor.execute(
         """
         SELECT
@@ -442,7 +502,8 @@ def dashboard():
             bk.category,
             bk.cover_url,
             b.borrow_date,
-            b.due_date
+            b.due_date,
+            b.fine_paid
         FROM borrow b
         JOIN books bk ON bk.book_id = b.book_id
         WHERE b.user_id = %s AND b.returned_at IS NULL
@@ -453,7 +514,7 @@ def dashboard():
     )
     borrowed_now = cursor.fetchall()
 
-    # Reading history makes the dashboard feel like a real account page.
+    # Reading history lets users see returned books and any unpaid late fine still attached to them.
     cursor.execute(
         """
         SELECT
@@ -463,7 +524,8 @@ def dashboard():
             bk.cover_url,
             b.borrow_date,
             b.returned_at,
-            b.due_date
+            b.due_date,
+            b.fine_paid
         FROM borrow b
         JOIN books bk ON bk.book_id = b.book_id
         WHERE b.user_id = %s AND b.returned_at IS NOT NULL
@@ -474,6 +536,7 @@ def dashboard():
     )
     reading_history = cursor.fetchall()
 
+    # This gives a short recent activity list for the dashboard.
     cursor.execute(
         """
         SELECT
@@ -499,6 +562,7 @@ def dashboard():
     )
     recent_activity = cursor.fetchall()
 
+    # These are used for overdue notifications.
     cursor.execute(
         """
         SELECT
@@ -516,6 +580,7 @@ def dashboard():
     )
     overdue_books = cursor.fetchall()
 
+    # These are used for due-soon notifications.
     cursor.execute(
         """
         SELECT
@@ -533,6 +598,7 @@ def dashboard():
     )
     due_soon_books = cursor.fetchall()
 
+    # New arrivals support the dashboard's live library feeling.
     cursor.execute(
         """
         SELECT title, author, category, cover_url, created_at
@@ -543,7 +609,7 @@ def dashboard():
     )
     new_arrivals = cursor.fetchall()
 
-    # Admin notifications use low stock and registration activity.
+    # Low stock helps the admin monitor books that may need attention.
     cursor.execute(
         """
         SELECT
@@ -564,6 +630,7 @@ def dashboard():
     )
     low_stock_books = cursor.fetchall()
 
+    # Recent registrations are shown in notifications for the admin side.
     cursor.execute(
         """
         SELECT COUNT(*) AS new_users_count
@@ -573,25 +640,7 @@ def dashboard():
     )
     new_users_count = cursor.fetchone()["new_users_count"]
 
-    # This gives admins a realistic fine summary across all overdue books.
-    cursor.execute(
-        """
-        SELECT
-            u.name,
-            bk.title,
-            b.due_date
-        FROM borrow b
-        JOIN users u ON u.user_id = b.user_id
-        JOIN books bk ON bk.book_id = b.book_id
-        WHERE b.returned_at IS NULL
-          AND b.due_date < CURDATE()
-        ORDER BY b.due_date ASC
-        LIMIT 5
-        """
-    )
-    admin_overdue_records = cursor.fetchall()
-
-    # This list is only meant for the admin dashboard so registered usernames are visible.
+    # This feeds the registered users table for admin.
     cursor.execute(
         """
         SELECT user_id, name, email, role, created_at
@@ -602,23 +651,61 @@ def dashboard():
     )
     registered_users = cursor.fetchall()
 
+    # This query feeds the separate admin fine area.
+    cursor.execute(
+        """
+        SELECT
+            b.borrow_id,
+            u.name,
+            u.email,
+            bk.title,
+            b.due_date,
+            b.returned_at,
+            b.fine_paid
+        FROM borrow b
+        JOIN users u ON u.user_id = b.user_id
+        JOIN books bk ON bk.book_id = b.book_id
+        ORDER BY b.due_date ASC
+        """
+    )
+    raw_admin_fine_rows = cursor.fetchall()
+
     cursor.close()
 
+    admin_fine_rows = []
+    total_system_fine = 0
+
+    # Only unpaid fines are shown in the admin fine area so the list stays realistic and useful.
+    for row in raw_admin_fine_rows:
+        if row["fine_paid"]:
+            continue
+        fine_amount = calculate_fine(row["due_date"], row["returned_at"])
+        if fine_amount <= 0:
+            continue
+
+        row["overdue_days"] = calculate_overdue_days(row["due_date"], row["returned_at"])
+        row["fine_amount"] = fine_amount
+        admin_fine_rows.append(row)
+        total_system_fine += fine_amount
+
+    # Add presentation labels and active fine values to current borrowed books.
     for item in borrowed_now:
         item["borrowed_label"] = days_ago_label(item["borrow_date"])
         status_text, status_class = due_status_label(item["due_date"])
         item["due_status_text"] = status_text
         item["due_status_class"] = status_class
         item["overdue_days"] = calculate_overdue_days(item["due_date"])
-        item["fine_amount"] = calculate_fine(item["due_date"])
+        item["fine_amount"] = 0 if item["fine_paid"] else calculate_fine(item["due_date"])
 
+    # Returned books may still show unpaid late fines if they have not been cleared.
     for item in reading_history:
         item["borrowed_label"] = days_ago_label(item["borrow_date"])
-        item["returned_fine"] = calculate_fine(item["due_date"], item["returned_at"])
+        item["returned_fine"] = 0 if item["fine_paid"] else calculate_fine(item["due_date"], item["returned_at"])
 
     notifications = []
 
     if is_admin():
+        # Admin notifications focus on system monitoring rather than one single user's activity.
         if overdue_count > 0:
             notifications.append(
                 make_notification(
@@ -627,8 +714,21 @@ def dashboard():
                     note_type="overdue",
                     icon="alert",
                     timestamp="Today",
-                    action_label="View Books",
-                    action_url="/books",
+                    action_label="Check Fine Area",
+                    action_url="/dashboard",
+                )
+            )
+
+        if total_system_fine > 0:
+            notifications.append(
+                make_notification(
+                    title=f"Outstanding fine total: £{total_system_fine}",
+                    detail="There are unpaid overdue fines in the system that need admin attention.",
+                    note_type="warning",
+                    icon="money",
+                    timestamp="Today",
+                    action_label="View Fine Summary",
+                    action_url="/dashboard",
                 )
             )
 
@@ -643,7 +743,7 @@ def dashboard():
                 )
             )
 
-        for book in low_stock_books[:3]:
+        for book in low_stock_books[:2]:
             notifications.append(
                 make_notification(
                     title=f"Low stock: {book['title']}",
@@ -655,29 +755,15 @@ def dashboard():
                     action_url=f"/books/edit/{book['book_id']}",
                 )
             )
-
-        for record in admin_overdue_records[:2]:
-            fine_amount = calculate_fine(record["due_date"])
-            overdue_days = calculate_overdue_days(record["due_date"])
-            notifications.append(
-                make_notification(
-                    title=f"Fine alert: {record['name']}",
-                    detail=f"{record['title']} is overdue by {overdue_days} day(s). Current fine: £{fine_amount}.",
-                    note_type="warning",
-                    icon="alert",
-                    timestamp="Today",
-                    action_label="View Books",
-                    action_url="/books",
-                )
-            )
     else:
-        if my_overdue > 0:
+        # User notifications are based only on that user's real borrowing and fine data.
+        if my_total_fine > 0:
             notifications.append(
                 make_notification(
-                    title=f"You have {my_overdue} overdue book(s)",
-                    detail=f"Your current overdue fine is £{my_total_fine}. Please return the book(s) as soon as possible.",
+                    title=f"Current unpaid fine: £{my_total_fine}",
+                    detail="You currently have unpaid overdue fines in your account.",
                     note_type="overdue",
-                    icon="alert",
+                    icon="money",
                     timestamp="Today",
                     action_label="View My Books",
                     action_url="/dashboard",
@@ -694,6 +780,21 @@ def dashboard():
                     timestamp="Today",
                     action_label="Check Due Dates",
                     action_url="/dashboard",
+                )
+            )
+
+        # This keeps due-soon alerts readable instead of listing too many separate cards.
+        if my_due_soon > 0 and due_soon_books:
+            due_titles = ", ".join(item["title"] for item in due_soon_books[:2])
+            notifications.append(
+                make_notification(
+                    title="Books due soon",
+                    detail=f"These books are close to the return date: {due_titles}.",
+                    note_type="warning",
+                    icon="book",
+                    timestamp="Today",
+                    action_label="Manage Borrowing",
+                    action_url="/books",
                 )
             )
 
@@ -725,7 +826,7 @@ def dashboard():
                 )
             )
 
-    # Info notifications are treated like already seen updates.
+    # Informational updates are treated as already seen so unread counts feel more realistic.
     for note in notifications:
         if note["type"] == "info":
             note["unread"] = False
@@ -753,6 +854,7 @@ def dashboard():
         "my_overdue": my_overdue,
         "my_returned": my_returned,
         "my_total_fine": my_total_fine,
+        "total_system_fine": total_system_fine,
     }
 
     return render_template(
@@ -769,6 +871,7 @@ def dashboard():
         reading_history=reading_history,
         fine_per_day=FINE_PER_DAY,
         registered_users=registered_users,
+        admin_fine_rows=admin_fine_rows,
     )
 
 
@@ -858,7 +961,7 @@ def view_books():
 @app.route("/books/edit/<int:book_id>", methods=["GET", "POST"])
 def edit_book(book_id):
     if not login_required() or not hydrate_session_user():
-        return redirect("/login")
+        return redirect("/books")
 
     if not is_admin():
         flash("Only admin can edit books.", "error")
@@ -907,7 +1010,7 @@ def edit_book(book_id):
 @app.route("/books/delete/<int:book_id>", methods=["POST"])
 def delete_book(book_id):
     if not login_required() or not hydrate_session_user():
-        return redirect("/login")
+        return redirect("/books")
 
     if not is_admin():
         flash("Only admin can delete books.", "error")
@@ -935,7 +1038,7 @@ def delete_book(book_id):
 @app.route("/borrow/<int:book_id>", methods=["POST"])
 def borrow_book(book_id):
     if not login_required() or not hydrate_session_user():
-        return redirect("/login")
+        return redirect("/books")
 
     book = fetch_book(book_id)
     if not book:
@@ -982,7 +1085,7 @@ def borrow_book(book_id):
 @app.route("/return/<int:borrow_id>", methods=["POST"])
 def return_book(borrow_id):
     if not login_required() or not hydrate_session_user():
-        return redirect("/login")
+        return redirect("/books")
 
     cursor = get_cursor(dictionary=True)
     cursor.execute(

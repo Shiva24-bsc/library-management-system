@@ -28,6 +28,7 @@
             color: var(--text);
         }
 
+        /* Registration card keeps the page focused on creating a new account. */
         .register-card {
             width: 100%;
             max-width: 460px;
@@ -51,6 +52,7 @@
             line-height: 1.5;
         }
 
+        /* Error box is shown if the registration form fails validation. */
         .error {
             color: var(--danger);
             background: #fdeceb;
@@ -76,6 +78,7 @@
             font-size: 14px;
         }
 
+        /* Main register button submits the new account details. */
         button {
             width: 100%;
             margin-top: 24px;
@@ -107,18 +110,20 @@
     </style>
 </head>
 <body>
+    <!-- Registration form is centered so new users can focus on account creation clearly. -->
     <div class="register-card">
         <h2>Create Account</h2>
         <p class="subtitle">
             Register a new account to borrow books, track due dates, and use the library system.
         </p>
 
+        <!-- Error message appears if the email already exists or required fields are missing. -->
         {% if error %}
             <div class="error">{{ error }}</div>
         {% endif %}
 
         <form method="POST">
-            <!-- Registration collects the core details needed to create a realistic user account. -->
+            <!-- These fields collect the main details needed to create a new library account. -->
             <label for="name">Full Name</label>
             <input id="name" name="name" type="text" placeholder="Enter your full name" required>
 
@@ -131,6 +136,7 @@
             <button type="submit">Register</button>
         </form>
 
+        <!-- Link back to login for users who already have an account. -->
         <p class="footer-text">
             Already have an account?
             <a href="/login">Login here</a>

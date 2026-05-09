@@ -25,6 +25,7 @@
             color: var(--text);
         }
 
+        /* Shared top navigation so the admin can move easily between main pages. */
         .navbar {
             background-color: var(--primary);
             color: white;
@@ -47,6 +48,7 @@
             margin-left: 20px;
         }
 
+        /* Main edit form container keeps the page focused on a single book record. */
         .container {
             max-width: 650px;
             margin: 40px auto;
@@ -68,6 +70,7 @@
             margin-bottom: 25px;
         }
 
+        /* Error text appears if form validation fails during update. */
         .error {
             color: var(--danger);
             font-weight: bold;
@@ -96,6 +99,7 @@
             margin-top: 6px;
         }
 
+        /* Preview box helps the admin see the current or updated cover image. */
         .preview-box {
             margin-top: 18px;
             padding: 14px;
@@ -117,6 +121,7 @@
             font-size: 14px;
         }
 
+        /* Main save button for updating the existing book record. */
         button {
             width: 100%;
             padding: 12px;
@@ -147,6 +152,7 @@
     </style>
 </head>
 <body>
+    <!-- Main navigation matches the rest of the system for consistency. -->
     <div class="navbar">
         <h2>Library Management System</h2>
         <div>
@@ -157,15 +163,17 @@
     </div>
 
     <div class="container">
+        <!-- Page heading explains that the admin is updating an existing book record. -->
         <h2>Edit Book</h2>
         <p class="subtitle">Update the book details carefully so the catalogue remains accurate and realistic.</p>
 
+        <!-- Error message appears if something is missing or invalid in the submitted form. -->
         {% if error %}
         <p class="error">{{ error }}</p>
         {% endif %}
 
         <form method="POST">
-            <!-- These fields hold the main book information shown in the catalogue -->
+            <!-- These fields contain the main book details already stored in the system. -->
             <label for="title">Book Title</label>
             <input id="title" name="title" type="text" value="{{ book.title }}" required>
 
@@ -175,13 +183,15 @@
             <label for="category">Category / Genre</label>
             <input id="category" name="category" type="text" value="{{ book.category }}" required>
 
-            <!-- Cover image URL is optional, but it helps make the system look more complete -->
+            <!-- Cover image URL is optional, but updating it can improve how the catalogue looks. -->
             <label for="cover_url">Book Cover Image URL</label>
             <input id="cover_url" name="cover_url" type="url" value="{{ book.cover_url or '' }}" placeholder="Paste a direct image link for the book cover">
             <div class="helper-text">
                 Update the image link if you want a different book cover to appear in the system.
             </div>
 
+            <!-- If the book already has a cover, show it straight away.
+                 Otherwise keep the placeholder visible until a new URL is entered. -->
             <div class="preview-box">
                 {% if book.cover_url %}
                     <img id="coverPreview" src="{{ book.cover_url }}" alt="Book cover preview">
@@ -196,19 +206,21 @@
                 {% endif %}
             </div>
 
+            <!-- Quantity shows how many copies the library currently has for this title. -->
             <label for="quantity">Quantity</label>
             <input id="quantity" name="quantity" type="number" min="0" value="{{ book.quantity }}" required>
 
             <button type="submit">Save Changes</button>
         </form>
 
+        <!-- Back link makes it easy to return to the catalogue without making more edits. -->
         <div class="back-link">
             <a href="/books">Back to Book List</a>
         </div>
     </div>
 
     <script>
-        // Live preview helps the admin check whether the image URL is correct before saving.
+        // Live preview helps the admin check the replacement image before saving changes.
         const coverInput = document.getElementById("cover_url");
         const coverPreview = document.getElementById("coverPreview");
         const previewPlaceholder = document.getElementById("previewPlaceholder");
@@ -216,18 +228,20 @@
         coverInput.addEventListener("input", function () {
             const imageUrl = coverInput.value.trim();
 
+            // If a new URL is typed, try to show that image immediately.
             if (imageUrl) {
                 coverPreview.src = imageUrl;
                 coverPreview.style.display = "inline-block";
                 previewPlaceholder.style.display = "none";
             } else {
+                // If the field is cleared, remove the preview and show the placeholder again.
                 coverPreview.src = "";
                 coverPreview.style.display = "none";
                 previewPlaceholder.style.display = "block";
             }
         });
 
-        // If the image cannot load, hide it and fall back to the placeholder.
+        // If the entered image link fails, switch back to the placeholder instead of showing a broken image.
         coverPreview.addEventListener("error", function () {
             coverPreview.style.display = "none";
             previewPlaceholder.style.display = "block";

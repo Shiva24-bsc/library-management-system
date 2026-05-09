@@ -28,6 +28,7 @@
             color: var(--text);
         }
 
+        /* Main login card keeps the page simple and focused on signing in. */
         .login-card {
             width: 100%;
             max-width: 430px;
@@ -51,6 +52,7 @@
             line-height: 1.5;
         }
 
+        /* Error box is shown when login details are wrong or incomplete. */
         .error {
             color: var(--danger);
             background: #fdeceb;
@@ -61,6 +63,7 @@
             margin-bottom: 16px;
         }
 
+        /* Flash message is used for success messages such as after registration or logout. */
         .flash {
             background: #e8f7ef;
             color: #18794e;
@@ -86,6 +89,7 @@
             font-size: 14px;
         }
 
+        /* Main login button submits the user credentials. */
         button {
             width: 100%;
             margin-top: 24px;
@@ -117,12 +121,14 @@
     </style>
 </head>
 <body>
+    <!-- Login card is centered so the first thing the user sees is the sign-in form. -->
     <div class="login-card">
         <h2>Library Login</h2>
         <p class="subtitle">
             Sign in to access your dashboard, manage books, and track borrowing activity.
         </p>
 
+        <!-- Flash messages usually appear here after registration or logout. -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -131,12 +137,13 @@
             {% endif %}
         {% endwith %}
 
+        <!-- Error message appears if the email or password is incorrect. -->
         {% if error %}
             <div class="error">{{ error }}</div>
         {% endif %}
 
         <form method="POST">
-            <!-- Users log in with email and password so the system feels closer to a real application. -->
+            <!-- Users sign in with email and password so the system feels closer to a real application. -->
             <label for="email">Email</label>
             <input id="email" name="email" type="email" placeholder="Enter your email" required>
 
@@ -146,6 +153,7 @@
             <button type="submit">Login</button>
         </form>
 
+        <!-- Link for new users who still need to create an account. -->
         <p class="footer-text">
             Don't have an account?
             <a href="/register">Register here</a>

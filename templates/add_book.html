@@ -26,6 +26,7 @@
             color: var(--text);
         }
 
+        /* Simple top navigation for moving around the main pages. */
         .navbar {
             background-color: var(--primary);
             color: white;
@@ -48,6 +49,7 @@
             margin-left: 20px;
         }
 
+        /* Main form card keeps the add-book page neat and focused. */
         .container {
             max-width: 650px;
             margin: 40px auto;
@@ -69,6 +71,7 @@
             margin-bottom: 25px;
         }
 
+        /* Flash box is used for success messages after saving. */
         .flash {
             padding: 12px;
             border-radius: 10px;
@@ -107,6 +110,7 @@
             margin-top: 6px;
         }
 
+        /* Preview area gives the admin a quick visual check before submitting. */
         .preview-box {
             margin-top: 18px;
             padding: 14px;
@@ -128,6 +132,7 @@
             font-size: 14px;
         }
 
+        /* Main submit button for saving the new book record. */
         button {
             width: 100%;
             padding: 12px;
@@ -158,6 +163,7 @@
     </style>
 </head>
 <body>
+    <!-- Top navigation stays the same as the rest of the system for consistency. -->
     <div class="navbar">
         <h2>Library Management System</h2>
         <div>
@@ -168,9 +174,11 @@
     </div>
 
     <div class="container">
+        <!-- Short heading area to explain the purpose of this page. -->
         <h2>Add Book</h2>
         <p class="subtitle">Enter complete book details to keep the catalogue realistic and well organised.</p>
 
+        <!-- Flash messages are used when a book is added successfully. -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -179,12 +187,13 @@
             {% endif %}
         {% endwith %}
 
+        <!-- Error message is shown if the form validation fails. -->
         {% if error %}
         <p class="error">{{ error }}</p>
         {% endif %}
 
         <form method="POST">
-            <!-- Main book identity fields -->
+            <!-- These first fields store the main identity of the book. -->
             <label for="title">Book Title</label>
             <input id="title" name="title" type="text" placeholder="Enter book title" required>
 
@@ -194,13 +203,14 @@
             <label for="category">Category / Genre</label>
             <input id="category" name="category" type="text" placeholder="Example: Programming, Fiction, Science" required>
 
-            <!-- Cover image URL keeps the project simple while still making it look realistic -->
+            <!-- Using an image URL keeps the project simple while still making the catalogue look realistic. -->
             <label for="cover_url">Book Cover Image URL</label>
             <input id="cover_url" name="cover_url" type="url" placeholder="Paste a direct image link for the book cover">
             <div class="helper-text">
                 You can use a direct image link so each book looks more realistic in the system.
             </div>
 
+            <!-- Preview box helps the admin confirm the image before saving the new book. -->
             <div class="preview-box">
                 <img id="coverPreview" src="" alt="Book cover preview" style="display:none;">
                 <div id="previewPlaceholder" class="preview-placeholder">
@@ -208,19 +218,21 @@
                 </div>
             </div>
 
+            <!-- Quantity controls how many copies the library owns for this title. -->
             <label for="quantity">Quantity</label>
             <input id="quantity" name="quantity" type="number" min="0" placeholder="Enter quantity" required>
 
             <button type="submit">Add Book</button>
         </form>
 
+        <!-- Small back link in case the admin wants to return without adding anything. -->
         <div class="back-link">
             <a href="/books">Back to Book List</a>
         </div>
     </div>
 
     <script>
-        // Show a quick preview so the admin can confirm the image looks correct before saving.
+        // This preview makes it easier to spot a wrong image link before the form is submitted.
         const coverInput = document.getElementById("cover_url");
         const coverPreview = document.getElementById("coverPreview");
         const previewPlaceholder = document.getElementById("previewPlaceholder");
@@ -228,18 +240,20 @@
         coverInput.addEventListener("input", function () {
             const imageUrl = coverInput.value.trim();
 
+            // If the admin entered a URL, try showing the image immediately.
             if (imageUrl) {
                 coverPreview.src = imageUrl;
                 coverPreview.style.display = "inline-block";
                 previewPlaceholder.style.display = "none";
             } else {
+                // If the field is cleared, switch back to the placeholder.
                 coverPreview.src = "";
                 coverPreview.style.display = "none";
                 previewPlaceholder.style.display = "block";
             }
         });
 
-        // If the image URL is broken, fall back to the placeholder.
+        // If the image fails to load, we hide the broken image and show the placeholder again.
         coverPreview.addEventListener("error", function () {
             coverPreview.style.display = "none";
             previewPlaceholder.style.display = "block";

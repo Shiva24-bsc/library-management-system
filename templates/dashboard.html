@@ -58,7 +58,7 @@
         }
 
         .container {
-            width: min(1220px, 94%);
+            width: min(1240px, 94%);
             margin: 30px auto 50px;
         }
 
@@ -108,7 +108,7 @@
 
         .stats-grid,
         .user-stats-grid {
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
             margin-bottom: 22px;
         }
 
@@ -188,7 +188,7 @@
         }
 
         .panel-grid {
-            grid-template-columns: 1.1fr 0.9fr;
+            grid-template-columns: 1fr 1fr;
         }
 
         .panel {
@@ -419,6 +419,41 @@
             font-size: 13px;
         }
 
+        .users-table-wrap,
+        .fine-table-wrap {
+            overflow-x: auto;
+        }
+
+        .users-table,
+        .fine-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table th,
+        .fine-table th {
+            background: #eaf3fb;
+            color: #0a4f82;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #d7e2ec;
+        }
+
+        .users-table td,
+        .fine-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5edf3;
+            background: #fbfdff;
+        }
+
+        .panel-subtitle {
+            margin-top: -8px;
+            margin-bottom: 14px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
         @media (max-width: 960px) {
             .panel-grid {
                 grid-template-columns: 1fr;
@@ -431,6 +466,7 @@
     </style>
 </head>
 <body>
+    <!-- Top navigation stays simple so users can move around the system easily. -->
     <div class="navbar">
         <h2>Library Management System</h2>
         <div class="nav-links">
@@ -444,6 +480,7 @@
     </div>
 
     <div class="container">
+        <!-- Flash messages are useful for actions like login, borrow, return, and book updates. -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -452,22 +489,23 @@
             {% endif %}
         {% endwith %}
 
-        <!-- This intro changes by role so the dashboard feels more realistic for each account type. -->
+        <!-- This welcome section changes slightly depending on whether the person is admin or user. -->
         <div class="hero">
             <h1>Welcome, {{ user }}</h1>
             {% if role == 'admin' %}
                 <p>
                     You are logged in as an <strong>admin</strong>. This dashboard helps you monitor borrowing activity,
-                    overdue records, low stock books, and fine-related alerts across the system.
+                    overdue records, fine summaries, low stock books, and registered users across the system.
                 </p>
             {% else %}
                 <p>
                     You are logged in as a <strong>user</strong>. This dashboard shows your live borrowing activity,
-                    due dates, overdue fines, and reading history based on your actual account usage.
+                    due dates, unpaid overdue fines, and reading history based on your actual account usage.
                 </p>
             {% endif %}
         </div>
 
+        <!-- Admin sees full library stats, while a normal user sees only personal account stats. -->
         {% if role == 'admin' %}
         <div class="stats-grid">
             <div class="stat-card">
@@ -502,12 +540,13 @@
                 <div class="stat-value">{{ stats.my_overdue }}</div>
             </div>
             <div class="user-stat-card">
-                <div class="stat-label">Current Fine</div>
+                <div class="stat-label">Current Unpaid Fine</div>
                 <div class="stat-value fine-value">£{{ stats.my_total_fine }}</div>
             </div>
         </div>
         {% endif %}
 
+        <!-- These quick cards act like shortcuts so the dashboard feels more useful and less empty. -->
         <div class="quick-grid">
             {% if role == 'admin' %}
                 <div class="quick-card">
@@ -523,8 +562,8 @@
                 </div>
 
                 <div class="quick-card">
-                    <h3>Monitor Fine Alerts</h3>
-                    <p>Use notifications to review overdue books, fine amounts, and important admin actions.</p>
+                    <h3>Check Fine Summary</h3>
+                    <p>Use the separate fine area below to see exactly which users currently owe overdue fines.</p>
                     <a href="/dashboard">Refresh Dashboard</a>
                 </div>
             {% else %}
@@ -542,14 +581,14 @@
 
                 <div class="quick-card">
                     <h3>Track Fines and Due Dates</h3>
-                    <p>Your dashboard now shows overdue books, daily fines, and borrowing updates in one place.</p>
+                    <p>Your dashboard shows due dates, unpaid fines, and borrowing updates in one place.</p>
                     <a href="/dashboard">Refresh Dashboard</a>
                 </div>
             {% endif %}
         </div>
 
         <div class="panel-grid">
-            <!-- These tabs now filter notifications properly instead of behaving like plain labels. -->
+            <!-- Notification center is kept summary-based so it feels clean instead of repeating too many cards. -->
             <div class="panel">
                 <div class="notification-header">
                     <h3>Notification Center</h3>
@@ -574,17 +613,19 @@
                                     <div class="notification-title-row">
                                         <span class="notification-icon">
                                             {% if note.icon == 'alert' %}
-                                                ⚠
+                                                
                                             {% elif note.icon == 'clock' %}
-                                                ⏰
+                                                
                                             {% elif note.icon == 'book' %}
-                                                📘
+                                                
                                             {% elif note.icon == 'user' %}
-                                                👤
+                                                
                                             {% elif note.icon == 'stock' %}
-                                                📦
+                                                
+                                            {% elif note.icon == 'money' %}
+                                                
                                             {% else %}
-                                                🔔
+                                                
                                             {% endif %}
                                         </span>
                                         <strong>{{ note.title }}</strong>
@@ -609,14 +650,15 @@
                     <p class="empty">No notifications in this view.</p>
                 {% endif %}
 
+                <!--  fine is based on actual records. -->
                 {% if role != 'admin' %}
                     <p class="summary-note">
-                        Fine alerts are based on the simple rule: £{{ fine_per_day }} per day after the due date.
+                        Your total fine is based only on real unpaid overdue records, not placeholder values.
                     </p>
                 {% endif %}
             </div>
 
-            <!-- New arrivals keep the system looking active and realistic for demos. -->
+            <!-- New arrivals make the system feel active and recently updated. -->
             <div class="panel">
                 <h3>New Arrivals</h3>
                 {% if new_arrivals %}
@@ -644,7 +686,9 @@
                 {% endif %}
             </div>
 
-            <!-- Users can see current overdue fines directly on each borrowed book. -->
+            <!-- This section changes by role:
+                 admin sees recent activity,
+                 user sees currently borrowed books with live fine information. -->
             <div class="panel">
                 <h3>{% if role == 'admin' %}Recent Borrowing Activity{% else %}My Borrowed Books{% endif %}</h3>
                 {% if role == 'admin' %}
@@ -695,7 +739,7 @@
 
                                             {% if item.fine_amount > 0 %}
                                                 <div class="fine-note">
-                                                    Current fine: £{{ item.fine_amount }}
+                                                    Current unpaid fine: £{{ item.fine_amount }}
                                                 </div>
                                             {% endif %}
                                         </div>
@@ -714,24 +758,39 @@
                 {% endif %}
             </div>
 
-            <!-- Admin can now see registered users directly on the dashboard. -->
+            <!-- Admin sees registered users here.
+                 Normal users see their reading history and any unpaid fine on returned books. -->
             <div class="panel">
                 <h3>{% if role == 'admin' %}Registered Users{% else %}My Reading History{% endif %}</h3>
+
                 {% if role == 'admin' %}
-                    <div class="item-list">
-                        {% if registered_users %}
-                            {% for member in registered_users %}
-                                <div class="item">
-                                    <strong>{{ member.name }}</strong>
-                                    <small>{{ member.email }}</small><br>
-                                    <small>Role: {{ member.role|title }}</small><br>
-                                    <small>User ID: {{ member.user_id }}</small>
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            <p class="empty">No registered users found.</p>
-                        {% endif %}
-                    </div>
+                    {% if registered_users %}
+                        <div class="users-table-wrap">
+                            <table class="users-table">
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                </tr>
+
+                                {% for member in registered_users %}
+                                <tr>
+                                    <td>{{ member.user_id }}</td>
+                                    <td><strong>{{ member.name }}</strong></td>
+                                    <td>{{ member.email }}</td>
+                                    <td>
+                                        <span class="badge {% if member.role == 'admin' %}info{% else %}borrowed{% endif %}">
+                                            {{ member.role|title }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="empty">No registered users found.</p>
+                    {% endif %}
                 {% else %}
                     {% if reading_history %}
                         <div class="item-list">
@@ -754,7 +813,7 @@
 
                                             {% if item.returned_fine > 0 %}
                                                 <div class="fine-note">
-                                                    Late return fine: £{{ item.returned_fine }}
+                                                    Unpaid late fine: £{{ item.returned_fine }}
                                                 </div>
                                             {% endif %}
                                         </div>
@@ -767,6 +826,49 @@
                     {% endif %}
                 {% endif %}
             </div>
+
+            <!-- This is the separate fine area.
+                 It clearly shows who owes money and how much is still unpaid. -->
+            {% if role == 'admin' %}
+            <div class="panel">
+                <h3>Fine Summary</h3>
+                <p class="panel-subtitle">
+                    This area shows which users currently have unpaid fines, which book is involved, and the amount owed.
+                </p>
+
+                {% if admin_fine_rows %}
+                    <div class="fine-table-wrap">
+                        <table class="fine-table">
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Book</th>
+                                <th>Due Date</th>
+                                <th>Overdue Days</th>
+                                <th>Fine Amount</th>
+                            </tr>
+
+                            {% for row in admin_fine_rows %}
+                            <tr>
+                                <td><strong>{{ row.name }}</strong></td>
+                                <td>{{ row.email }}</td>
+                                <td>{{ row.title }}</td>
+                                <td>{{ row.due_date }}</td>
+                                <td>{{ row.overdue_days }}</td>
+                                <td>£{{ row.fine_amount }}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+
+                    <div class="fine-note">
+                        Total Outstanding Fine: £{{ stats.total_system_fine }}
+                    </div>
+                {% else %}
+                    <p class="empty">There are no unpaid overdue fines in the system right now.</p>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
     </div>
 </body>
